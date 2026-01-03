@@ -63,7 +63,7 @@ export function Sidebar() {
 
       <div className="p-4 border-t border-slate-800">
         <button
-          onClick={() => logout()}
+          onClick={() => logout.mutate()}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />

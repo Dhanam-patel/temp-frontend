@@ -53,9 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useMutation({
     mutationFn: async () => {
+      // In a real app, this would hit /api/logout
       queryClient.setQueryData(["/api/me"], null);
     },
     onSuccess: () => {
+      queryClient.removeQueries(); // Clear all data on logout
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
