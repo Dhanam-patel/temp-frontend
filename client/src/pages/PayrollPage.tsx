@@ -1,19 +1,22 @@
 import { Layout } from "@/components/Layout";
 import { usePayroll } from "@/hooks/use-payroll";
 import { useEmployees } from "@/hooks/use-employees";
+import { useAuth } from "@/hooks/use-auth";
 import { StatusChip } from "@/components/StatusChip";
 import { Banknote, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PayrollPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { payroll, isLoading } = usePayroll();
   const { employees } = useEmployees();
 
-  const getEmployeeName = (id: number) => {
-    return employees?.find(e => e.id === id)?.fullName || `Employee #${id}`;
+  const getEmployeeName = (id: string) => {
+    return employees?.find(e => e.id === id)?.full_name || `Employee #${id}`;
   };
 
-  const getDepartment = (id: number) => {
+  const getDepartment = (id: string) => {
     return employees?.find(e => e.id === id)?.department || 'Unassigned';
   };
 
@@ -38,7 +41,7 @@ export default function PayrollPage() {
             <p>No payroll records found.</p>
           </div>
         ) : (
-          payroll?.map((record) => (
+          (payroll as any[])?.map((record) => (
             <div key={record.id} className="card-premium p-5 flex flex-col md:flex-row items-center justify-between gap-4 group">
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
@@ -46,25 +49,25 @@ export default function PayrollPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">
-                    ${(record.amount / 100).toFixed(2)}
+                    ${record.net_pay.toLocaleString()}
                   </h3>
                   <p className="text-sm text-slate-500">
-                    {getEmployeeName(record.employeeId)} • {getDepartment(record.employeeId)}
+                    {getEmployeeName(record.employee_id)} • {getDepartment(record.employee_id)}
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-6 w-full md:w-auto justify-between">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">{record.month}</p>
+                  <p className="text-sm font-medium text-slate-900">Period Ends: {record.pay_period_end}</p>
                   <p className="text-xs text-slate-500">
-                    {record.paymentDate ? new Date(record.paymentDate).toLocaleDateString() : 'Pending'}
+                    Started: {record.pay_period_start}
                   </p>
                 </div>
-                
-                <StatusChip 
-                  status={record.status} 
-                  variant={record.status === 'paid' ? 'success' : 'warning'} 
+
+                <StatusChip
+                  status="PAID"
+                  variant="success"
                   className="px-4 py-1"
                 />
               </div>

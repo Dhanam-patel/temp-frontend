@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useLeaves } from "@/hooks/use-leaves";
 import { useEmployees } from "@/hooks/use-employees";
+import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Check, X } from "lucide-react";
@@ -22,7 +23,9 @@ const formSchema = insertLeaveSchema.extend({
 });
 
 export default function LeavesPage() {
-  const { leaves, createLeave, updateLeaveStatus, isLoading } = useLeaves();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { leaves, createLeave, updateLeaveStatus, isLoading } = useLeaves(isAdmin ? undefined : user?.id);
   const { employees } = useEmployees();
   const [isRequestOpen, setIsRequestOpen] = useState(false);
 
@@ -169,13 +172,13 @@ export default function LeavesPage() {
             </div>
 
             <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-              <StatusChip 
-                status={leave.status} 
-                variant={leave.status === 'approved' ? 'success' : leave.status === 'rejected' ? 'error' : 'warning'} 
+              <StatusChip
+                status={leave.status}
+                variant={leave.status === 'approved' ? 'success' : leave.status === 'rejected' ? 'error' : 'warning'}
                 className="text-sm px-3 py-1"
               />
-              
-              {leave.status === 'pending' && (
+
+              {isAdmin && leave.status === 'pending' && (
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleReject(leave.id)}>
                     <X className="w-4 h-4" />

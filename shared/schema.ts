@@ -4,76 +4,83 @@ import { z } from "zod";
 
 // === TABLE DEFINITIONS ===
 
+// Note: This schema now primarily serves as a type definition for the frontend 
+// to align with the FastAPI backend (Dayflow API).
+
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(), // Login ID
-  password: text("password").notNull(),
-  role: text("role").notNull().default("employee"), // 'admin' | 'employee'
-  fullName: text("full_name").notNull(),
-  email: text("email").notNull(),
+  id: text("id").primaryKey(),
+  full_name: text("full_name").notNull(),
+  email: text("email").notNull().unique(),
+  role: text("role").notNull(),
+  company: text("company").notNull(),
   phone: text("phone"),
-  companyName: text("company_name"), // Only for admin/tenant
-  photoUrl: text("photo_url"),
-  jobTitle: text("job_title"),
-  department: text("department"),
+  created_at: timestamp("created_at"),
+  updated_at: timestamp("updated_at"),
+});
+
+// Employee specific fields (usually merged with User in frontend)
+export const employees = pgTable("employees", {
+  id: text("id").primaryKey(), // UUID
+  job_title: text("job_title").notNull(),
+  department: text("department").notNull(),
   address: text("address"),
-  createdAt: timestamp("created_at").defaultNow(),
+  check_in_time: text("check_in_time"), // format "HH:MM:SS"
+  check_out_time: text("check_out_time"),
+  date_of_joining: text("date_of_joining"),
+  profile_picture_url: text("profile_picture_url"),
 });
 
 export const attendance = pgTable("attendance", {
-  id: serial("id").primaryKey(),
-  employeeId: integer("employee_id").notNull(), // Foreign key to users.id handled in code/relations
-  date: date("date").notNull(), // YYYY-MM-DD
-  checkIn: timestamp("check_in"),
-  checkOut: timestamp("check_out"),
-  workHours: integer("work_hours").default(0), // In minutes
-  overtime: integer("overtime").default(0), // In minutes
-  status: text("status").notNull().default("absent"), // 'present' | 'absent' | 'half-day' | 'leave'
+  id: text("id").primaryKey(), // UUID
+  employee_id: text("employee_id").notNull(),
+  work_date: text("work_date").notNull(), // YYYY-MM-DD
+  check_in: timestamp("check_in"),
+  check_out: timestamp("check_out"),
+  status: text("status").notNull(), // 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE'
+  created_at: timestamp("created_at"),
 });
 
-export const leaves = pgTable("leaves", {
-  id: serial("id").primaryKey(),
-  employeeId: integer("employee_id").notNull(),
-  type: text("type").notNull(), // 'paid' | 'sick' | 'unpaid'
-  startDate: date("start_date").notNull(),
-  endDate: date("end_date").notNull(),
-  reason: text("reason"),
-  attachmentUrl: text("attachment_url"),
-  daysAllocated: integer("days_allocated").notNull(),
-  status: text("status").notNull().default("pending"), // 'pending' | 'approved' | 'rejected'
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Leaves and other tables not in current API scope removed
 
 export const payroll = pgTable("payroll", {
-  id: serial("id").primaryKey(),
-  employeeId: integer("employee_id").notNull(),
-  month: text("month").notNull(), // e.g., "October 2023"
-  amount: integer("amount").notNull(), // In cents
-  status: text("status").notNull().default("unpaid"), // 'paid' | 'unpaid'
-  paymentDate: timestamp("payment_date"),
+  id: integer("id").primaryKey(),
+  employee_id: text("employee_id").notNull(),
+  pay_period_start: text("pay_period_start").notNull(),
+  pay_period_end: text("pay_period_end").notNull(),
+  basic_salary: integer("basic_salary").notNull(),
+  deductions: integer("deductions").default(0),
+  net_pay: integer("net_pay").notNull(),
 });
 
 // === SCHEMAS ===
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
-export const insertLeaveSchema = createInsertSchema(leaves).omit({ id: true, createdAt: true });
-export const insertPayrollSchema = createInsertSchema(payroll).omit({ id: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, created_at: true } as any);
+export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true } as any);
+export const insertPayrollSchema = createInsertSchema(payroll).omit({ id: true } as any);
+
+// === TYPES ===
 
 // === TYPES ===
 
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
+export type Employee = typeof employees.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
-export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
-
-export type Leave = typeof leaves.$inferSelect;
-export type InsertLeave = z.infer<typeof insertLeaveSchema>;
-
 export type Payroll = typeof payroll.$inferSelect;
-export type InsertPayroll = z.infer<typeof insertPayrollSchema>;
 
-// Request/Response Types
+// Request Types
 export type LoginRequest = { username: string; password: string };
-export type AuthResponse = { user: User; token?: string };
+export type EmployeeCreate = {
+  job_title: string;
+  department: string;
+  address?: string;
+  check_in_time?: string;
+  check_out_time?: string;
+  date_of_joining: string;
+  user: {
+    full_name: string;
+    email: string;
+    role: string;
+    company: string;
+    password: string;
+  };
+};

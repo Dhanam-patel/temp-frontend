@@ -8,10 +8,10 @@ import Dashboard from "@/pages/Dashboard";
 import EmployeesList from "@/pages/EmployeesList";
 import EmployeeDetail from "@/pages/EmployeeDetail";
 import AttendancePage from "@/pages/AttendancePage";
-import LeavesPage from "@/pages/LeavesPage";
 import PayrollPage from "@/pages/PayrollPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
+import ChangePasswordPage from "@/pages/ChangePasswordPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -42,7 +42,8 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/signup" component={SignupPage} />
-      
+      <Route path="/change-password" component={ChangePasswordPage} />
+
       <Route path="/">
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
@@ -55,13 +56,10 @@ function Router() {
       <Route path="/attendance">
         {() => <ProtectedRoute component={AttendancePage} />}
       </Route>
-      <Route path="/leaves">
-        {() => <ProtectedRoute component={LeavesPage} />}
-      </Route>
       <Route path="/payroll">
         {() => <ProtectedRoute component={PayrollPage} />}
       </Route>
-      
+
       <Route component={NotFound} />
     </Switch>
   );

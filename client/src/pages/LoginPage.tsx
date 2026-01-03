@@ -16,7 +16,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const { login } = useAuth();
-  
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -50,7 +50,7 @@ export default function LoginPage() {
                   <FormMessage />
                 </FormItem>
               )} />
-              
+
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
@@ -71,7 +71,7 @@ export default function LoginPage() {
             <p className="text-sm text-slate-500">
               Don't have an account?{" "}
               <Link href="/signup" className="text-indigo-600 font-semibold hover:underline">
-                Create Company
+                Sign Up
               </Link>
             </p>
           </div>

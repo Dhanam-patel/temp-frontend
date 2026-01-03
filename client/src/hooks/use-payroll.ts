@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@shared/routes";
+import api from "@/services/api";
 
-export function usePayroll(employeeId?: number) {
-  const queryKey = [api.payroll.list.path, employeeId ? { employeeId } : undefined];
-  const fetchUrl = employeeId 
-    ? `${api.payroll.list.path}?employeeId=${employeeId}` 
-    : api.payroll.list.path;
-
+export function usePayroll(employeeId?: string) {
   const { data: payroll, isLoading } = useQuery({
-    queryKey,
+    queryKey: ["/payroll", employeeId],
     queryFn: async () => {
-      const res = await fetch(fetchUrl, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch payroll");
-      return api.payroll.list.responses[200].parse(await res.json());
+      if (employeeId) {
+        // Fetch payroll for specific employee (Admin/HR)
+        const response = await api.get(`/payroll/employees/${employeeId}`);
+        return response.data;
+      } else {
+        // Fetch payroll for current user
+        const response = await api.get("/payroll/me");
+        return response.data;
+      }
     },
   });
 

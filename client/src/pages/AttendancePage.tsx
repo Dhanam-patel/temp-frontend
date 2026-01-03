@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useAttendance } from "@/hooks/use-attendance";
 import { useEmployees } from "@/hooks/use-employees";
+import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CalendarCheck, Search } from "lucide-react";
@@ -17,26 +18,41 @@ import {
 } from "@/components/ui/table";
 
 export default function AttendancePage() {
-  const { attendanceRecords, isLoading } = useAttendance();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const { attendanceRecords, isLoading, checkIn, checkOut } = useAttendance();
   const { employees } = useEmployees();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const getEmployeeName = (id: number) => {
-    return employees?.find(e => e.id === id)?.fullName || `Employee #${id}`;
+  // Find the logged-in user's record in the derived attendance list
+  // Note: user?.id is string, record.id (employeeId) is string.
+  // We need to match based on the user -> employee relationship.
+  // attendanceRecords items have `employeeId`.
+  // `user` object from useAuth has `id` (User ID).
+  // Wait, `attendanceRecords` derived from `employees` list.
+  // `employees` list has `id` (Employee ID) and `user_id` (User ID).
+  // `attendanceRecords` maps `employeeId` = `emp.id`.
+  // So we need to find the record where the employee corresponds to the current user.
+  // Use `employees` hook to map User ID -> Employee ID.
+  const myEmployee = employees?.find(e => e.user_id === user?.id);
+  const myRecord = (attendanceRecords as any[])?.find((r: any) => r.employee_id === myEmployee?.id);
+
+  const getEmployeeName = (id: string) => {
+    return employees?.find(e => e.id === id)?.full_name || `Employee #${id}`;
   };
 
   const getStatusVariant = (status: string) => {
-    switch(status) {
-      case 'present': return 'success';
-      case 'absent': return 'error';
-      case 'half-day': return 'warning';
-      case 'leave': return 'info';
+    switch (status) {
+      case 'PRESENT': return 'success';
+      case 'ABSENT': return 'error';
+      case 'HALF_DAY': return 'warning';
+      case 'LEAVE': return 'info';
       default: return 'neutral';
     }
   };
 
-  const filteredRecords = attendanceRecords?.filter(record => 
-    getEmployeeName(record.employeeId).toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRecords = (attendanceRecords as any[])?.filter(record =>
+    getEmployeeName(record.employee_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -46,13 +62,29 @@ export default function AttendancePage() {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Attendance</h1>
           <p className="text-slate-500">Track employee check-ins and working hours.</p>
         </div>
-        
+
         <div className="flex gap-3">
           <Button variant="outline">Export Report</Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <CalendarCheck className="w-4 h-4 mr-2" />
-            Mark Attendance
-          </Button>
+          {!isAdmin && (
+            <div className="flex gap-2">
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                disabled={checkIn.isPending}
+                onClick={() => checkIn.mutate()}
+              >
+                <CalendarCheck className="w-4 h-4 mr-2" />
+                {checkIn.isPending ? "Checking In..." : "Check In"}
+              </Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={checkOut.isPending}
+                onClick={() => checkOut.mutate()}
+              >
+                <CalendarCheck className="w-4 h-4 mr-2" />
+                {checkOut.isPending ? "Checking Out..." : "Check Out"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -71,7 +103,7 @@ export default function AttendancePage() {
             Showing {filteredRecords?.length || 0} records
           </div>
         </div>
-        
+
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-zinc-50/50">
@@ -96,17 +128,17 @@ export default function AttendancePage() {
               filteredRecords?.map((record) => (
                 <TableRow key={record.id} className="hover:bg-zinc-50">
                   <TableCell className="font-medium text-slate-900">
-                    {getEmployeeName(record.employeeId)}
+                    {getEmployeeName(record.employee_id)}
                   </TableCell>
-                  <TableCell>{format(new Date(record.date), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(record.work_date), 'MMM dd, yyyy')}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    {record.checkIn ? format(new Date(record.checkIn), 'hh:mm a') : '-'}
+                    {record.check_in ? format(new Date(record.check_in), 'hh:mm a') : '-'}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {record.checkOut ? format(new Date(record.checkOut), 'hh:mm a') : '-'}
+                    {record.check_out ? format(new Date(record.check_out), 'hh:mm a') : '-'}
                   </TableCell>
                   <TableCell>
-                    {record.workHours ? `${Math.floor(record.workHours / 60)}h ${record.workHours % 60}m` : '-'}
+                    {record.working_hours ? `${record.working_hours.toFixed(1)}h` : '-'}
                   </TableCell>
                   <TableCell>
                     <StatusChip status={record.status} variant={getStatusVariant(record.status)} />

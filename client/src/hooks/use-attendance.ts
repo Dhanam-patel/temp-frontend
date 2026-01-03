@@ -1,50 +1,69 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@shared/routes";
-import { type InsertAttendance } from "@shared/schema";
+import { employeeService } from "@/services/employee";
 import { useToast } from "@/hooks/use-toast";
+import api from "@/services/api";
 
-export function useAttendance(employeeId?: number) {
+export function useAttendance(employeeId?: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Construct query params if employeeId is present
-  const queryKey = [api.attendance.list.path, employeeId ? { employeeId } : undefined];
-  const fetchUrl = employeeId 
-    ? `${api.attendance.list.path}?employeeId=${employeeId}` 
-    : api.attendance.list.path;
-
   const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey,
+    queryKey: ["/attendance", employeeId],
     queryFn: async () => {
-      const res = await fetch(fetchUrl, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch attendance");
-      return api.attendance.list.responses[200].parse(await res.json());
+      if (employeeId) {
+        // Viewing specific employee
+        const response = await api.get(`/attendance/employees/${employeeId}`);
+        return response.data;
+      } else {
+        // If we want a list of all (admin), OR just 'me' for regular user.
+        // For simplicity, let's try /attendance/ first, fall back to /attendance/me if it fails or if not admin
+        try {
+          // If called without ID on Attendance page, we likely want the full list if admin
+          const response = await api.get('/attendance/');
+          return response.data;
+        } catch (e) {
+          return await employeeService.getAttendanceMe();
+        }
+      }
     },
   });
 
-  const createAttendance = useMutation({
-    mutationFn: async (data: InsertAttendance) => {
-      const res = await fetch(api.attendance.create.path, {
-        method: api.attendance.create.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to record attendance");
-      return api.attendance.create.responses[201].parse(await res.json());
+  const checkInMutation = useMutation({
+    mutationFn: async () => {
+      return await employeeService.checkIn();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.attendance.list.path] });
-      toast({ title: "Success", description: "Attendance recorded successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["/employees"] });
+      toast({ title: "Checked In", description: "Your attendance has been recorded." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to record attendance", variant: "destructive" });
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      const message = typeof detail === 'string' ? detail : "Failed to check in";
+      toast({ title: "Error", description: message, variant: "destructive" });
+    },
+  });
+
+  const checkOutMutation = useMutation({
+    mutationFn: async () => {
+      return await employeeService.checkOut();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["/employees"] });
+      toast({ title: "Checked Out", description: "Your checkout time has been recorded." });
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail;
+      const message = typeof detail === 'string' ? detail : "Failed to check out";
+      toast({ title: "Error", description: message, variant: "destructive" });
     },
   });
 
   return {
     attendanceRecords,
     isLoading,
-    createAttendance,
+    checkIn: checkInMutation,
+    checkOut: checkOutMutation,
   };
 }

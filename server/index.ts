@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { initializeWebSocket } from "./websocket";
+import { initializeCronJobs } from "./cron";
 
 const app = express();
 const httpServer = createServer(app);
@@ -14,13 +16,14 @@ declare module "http" {
 
 app.use(
   express.json({
+    limit: '10mb', // Increase limit for base64 logo uploads
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -69,6 +72,13 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  // Initialize WebSocket for real-time updates
+  initializeWebSocket(httpServer);
+  log("WebSocket server initialized");
+
+  // Initialize cron jobs for daily status reset
+  initializeCronJobs();
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
