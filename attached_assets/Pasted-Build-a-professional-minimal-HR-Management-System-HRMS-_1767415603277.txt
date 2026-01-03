@@ -1,0 +1,66 @@
+Build a professional, minimal HR Management System (HRMS) named "Dayflow". The design must be clean, corporate, and scannable. Strictly use Next.js (App Router), Tailwind CSS, and HeroUI (formerly NextUI). Do not use shadcn/ui. All data must be static/mocked for now, but structured to support future API integration.
+
+1. Layout & Navigation (Role-Based):
+
+Persistent Sidebar: Minimal navigation with icons (Dashboard, Employees, Attendance, Time Off, Payroll).
+
+Topbar: Include a Search bar, Notification icon, and a Profile dropdown.
+
+Tab-Based Navigation: For the main dashboard and detail pages, use HeroUI Tabs for: "Employees", "Attendance", and "Time Off".
+
+2. Authentication System:
+
+Sign In: Center-aligned card with fields for Login ID or Email and Password.
+
+Sign Up (Admin only): Form for Company Name (with logo upload), Full Name, Email, Phone, and Password.
+
+ID Logic Note: Include a non-functional UI element showing the auto-generated ID format (e.g., OIJODO20220001).
+
+3. Employee Management (Admin View):
+
+List View: A grid of cards showing Employee Photo, Name, and Role.
+
+Detailed Profile: A tabbed interface for individual employees:
+
+Info Tab: Personal details, address, and job info (Editable for Admin).
+
+Attendance Tab: Detailed history.
+
+Time Off Tab: Leave history and balance.
+
+Payroll Tab: Payment history with status-colored chips (Green for Paid, Red for Unpaid).
+
+4. Attendance & Time Off Tracking:
+
+Attendance Table: Columns for Date, Check-in, Check-out, Work Hours, and Overtime.
+
+Time Off Table: Columns for Leave Type, Duration, Status (Pending/Approved/Rejected), and Actions (Approve/Reject buttons for Admin).
+
+Time Off Request Modal: Fields for Leave Type (Paid, Sick, Unpaid), Validity Period (Start/End date), Allocation (Days), and Attachment.
+
+5. Design Guidelines:
+
+Color Palette: Use professional shades like Indigo, Slate, and Zinc. Status colors: Present/Paid (Green), Absent/Unpaid (Red), Half-day (Yellow), Leave (Blue).
+
+Components: Utilize HeroUI Table, Card, Modal, Tabs, Button, and Input components.
+
+Typography: Clean sans-serif (Inter or Geist).
+
+Recommended File Structure
+To stay organized for your backend team, I suggest this architecture:
+
+Plaintext
+
+/src
+  /app
+    /login        # Sign-in page
+    /signup       # Sign-up page
+    /(dashboard)  # Main layout with Sidebar/Nav
+      /employees  # List and Details (tabbed)
+      /attendance # Attendance tables
+      /leave      # Time-off management
+      /payroll    # Salary views
+  /components
+    /ui           # Custom HeroUI wrappers
+    /forms        # Shared forms (Leave request, Profile edit)
+  /data           # Static JSON mock files
