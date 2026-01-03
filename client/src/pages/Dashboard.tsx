@@ -1,12 +1,14 @@
 import { Layout } from "@/components/Layout";
 import { StatCard } from "@/components/StatCard";
-import { Users, CalendarOff, Clock, TrendingUp } from "lucide-react";
+import { Users, CalendarOff, Clock, TrendingUp, Briefcase } from "lucide-react";
 import { useEmployees } from "@/hooks/use-employees";
 import { useAttendance } from "@/hooks/use-attendance";
 import { useLeaves } from "@/hooks/use-leaves";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { employees } = useEmployees();
   const { attendanceRecords } = useAttendance();
   const { leaves } = useLeaves();
@@ -23,6 +25,8 @@ export default function Dashboard() {
     return today >= start && today <= end && l.status === 'approved';
   }).length || 0;
 
+  const isAdmin = user?.role === "admin";
+
   // Mock data for chart - in real app, aggregate from backend
   const attendanceData = [
     { name: 'Mon', present: 40, absent: 4 },
@@ -35,39 +39,64 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
-        <p className="text-slate-500">Overview of your company's HR metrics.</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          {isAdmin ? "Admin Dashboard" : "Employee Portal"}
+        </h1>
+        <p className="text-slate-500">
+          {isAdmin ? "Overview of your company's HR metrics." : `Welcome back, ${user?.fullName}.`}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          label="Total Employees" 
-          value={totalEmployees} 
-          icon={<Users className="w-5 h-5" />}
-          trend="+12%"
-          trendUp={true}
-        />
-        <StatCard 
-          label="Present Today" 
-          value={presentToday} 
-          icon={<Clock className="w-5 h-5" />}
-          trend="96% rate"
-          trendUp={true}
-        />
-        <StatCard 
-          label="On Leave" 
-          value={onLeaveToday} 
-          icon={<CalendarOff className="w-5 h-5" />}
-          className="border-l-4 border-l-amber-400"
-        />
-        <StatCard 
-          label="Hiring Pipeline" 
-          value="8" 
-          icon={<TrendingUp className="w-5 h-5" />}
-          trend="3 interviews"
-          trendUp={true}
-        />
-      </div>
+      {isAdmin ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard 
+            label="Total Employees" 
+            value={totalEmployees} 
+            icon={<Users className="w-5 h-5" />}
+            trend="+12%"
+            trendUp={true}
+          />
+          <StatCard 
+            label="Present Today" 
+            value={presentToday} 
+            icon={<Clock className="w-5 h-5" />}
+            trend="96% rate"
+            trendUp={true}
+          />
+          <StatCard 
+            label="On Leave" 
+            value={onLeaveToday} 
+            icon={<CalendarOff className="w-5 h-5" />}
+            className="border-l-4 border-l-amber-400"
+          />
+          <StatCard 
+            label="Hiring Pipeline" 
+            value="8" 
+            icon={<TrendingUp className="w-5 h-5" />}
+            trend="3 interviews"
+            trendUp={true}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <StatCard 
+            label="Leave Balance" 
+            value="12 days" 
+            icon={<CalendarOff className="w-5 h-5" />}
+          />
+          <StatCard 
+            label="Attendance Score" 
+            value="98%" 
+            icon={<Clock className="w-5 h-5" />}
+            trendUp={true}
+          />
+          <StatCard 
+            label="Active Project" 
+            value="Dayflow" 
+            icon={<Briefcase className="w-5 h-5" />}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 card-premium p-6">

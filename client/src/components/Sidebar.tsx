@@ -21,7 +21,12 @@ const navItems = [
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+
+  const filteredItems = navItems.filter(item => {
+    if (item.href === "/employees" && user?.role !== "admin") return false;
+    return true;
+  });
 
   return (
     <div className="w-64 h-screen bg-slate-900 text-white flex flex-col flex-shrink-0 transition-all duration-300">
@@ -36,7 +41,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1">
-        {navItems.map((item) => {
+        {filteredItems.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
           return (
             <Link key={item.href} href={item.href}>
