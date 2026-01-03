@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useEmployees } from "@/hooks/use-employees";
 import { Layout } from "@/components/Layout";
-import { Plus, Search, MoreVertical, Mail, Phone } from "lucide-react";
+import { Plus, Search, MoreVertical, Mail, Phone, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";

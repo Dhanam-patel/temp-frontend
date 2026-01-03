@@ -6,6 +6,7 @@ import { useAttendance } from "@/hooks/use-attendance";
 import { useLeaves } from "@/hooks/use-leaves";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from "@/hooks/use-auth";
+import { StatusChip } from "@/components/StatusChip";
 
 export default function Dashboard() {
   const { user } = useAuth();

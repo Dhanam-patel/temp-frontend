@@ -20,12 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ["/api/me"], // Note: Backend route for this will be added if needed, but for now we rely on login success state
+    queryKey: ["/api/me"], 
     queryFn: async () => {
-      // Placeholder for session check
-      return null;
+      // Since we don't have a real session yet, we'll try to get it from query cache or return null
+      return queryClient.getQueryData(["/api/me"]) ?? null;
     },
     retry: false,
+    staleTime: Infinity,
   });
 
   const login = useMutation({
@@ -52,7 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useMutation({
     mutationFn: async () => {
-      // In a real app, this would hit /api/logout
       queryClient.setQueryData(["/api/me"], null);
     },
     onSuccess: () => {
